@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.net.http.SslError;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
@@ -12,6 +13,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -105,9 +107,14 @@ public class ExampleMainActivity extends Activity {
 
             if(host.equals("stackoverflow.com"))
             {
+                if(url.equals("https://stackoverflow.com/users/logout")){
+                    clearCookies(getApplicationContext());
+//                    clearFB();
+                }
                 return false;
             }
-            if(host.equals("www.facebook.com") | host.equals("m.facebook.com") )
+            if(host.contains("www.facebook.com") | host.contains("m.facebook.com") | host.contains("outh")|
+                    host.contains("facebook")  | host.contains("www.facebook.com//v2") | host.contains("stackauth.com"))
             {
                 return false;
             }
@@ -132,6 +139,7 @@ public class ExampleMainActivity extends Activity {
         @Override
         public boolean onCreateWindow(WebView view, boolean isDialog,
                                       boolean isUserGesture, Message resultMsg) {
+            Log.d("ExampleMain","onCreateWindow");
             WebView mWebviewPop = new WebView(mContext);
             mWebviewPop.setVerticalScrollBarEnabled(false);
             mWebviewPop.setHorizontalScrollBarEnabled(false);
@@ -154,5 +162,36 @@ public class ExampleMainActivity extends Activity {
             Log.d("onCloseWindow", "called");
         }
 
+    }
+
+    public String clearFBcoockies() {
+        String facebookCoockies = CookieManager.getInstance().getCookie("https://facebook.com");
+        Log.d("ExampleMain", "Cookies for facebook.com:" + facebookCoockies);
+        return facebookCoockies;
+    }
+    public void clearFB() {
+        CookieManager cookieManager=CookieManager.getInstance();
+        cookieManager.setCookie(clearFBcoockies(),"");
+    }
+
+    @SuppressWarnings("deprecation")
+    public  void clearCookies(Context context)
+    {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            Log.d("ExampleMain", "Using clearCookies code for API >=" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().flush();
+        } else
+        {
+            Log.d("ExampleMain", "Using clearCookies code for API <" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
+            CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(context);
+            cookieSyncMngr.startSync();
+            CookieManager cookieManager=CookieManager.getInstance();
+            cookieManager.removeAllCookie();
+            cookieManager.removeSessionCookie();
+            cookieSyncMngr.stopSync();
+            cookieSyncMngr.sync();
+        }
     }
 }
